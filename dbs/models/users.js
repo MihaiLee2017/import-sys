@@ -7,7 +7,8 @@ const UserSchema = new Schema({
     },
     password: {
         type: String,
-        require: true
+        require: true,
+        default: "123456"
     },
     email: {
         type: String,
@@ -17,6 +18,9 @@ const UserSchema = new Schema({
         type: String,
         require: true,
         unique: true,
+    },
+    roleId: {
+        type: mongoose.Schema.Types.ObjectId, ref: 'roles'
     },
     create_date: { type: Date, default: Date.now }
 })
