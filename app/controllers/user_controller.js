@@ -7,14 +7,11 @@ const Redis = require('koa-redis')
 //获取用户
 exports.getUser = async (ctx, next) => {
     if (ctx.isAuthenticated()) {
+        console.log("ctx.session")
         const { username, email, codeId } = ctx.session.passport.user
         ctx.body = {
             data: {
-                user: {
-                    username,
-                    email,
-                    codeId
-                }
+                user: ctx.session.passport.user
             }
         }
     } else {
@@ -79,22 +76,6 @@ exports.signUp = async (ctx, next) => {
 exports.importUser = async (ctx, next) => {
     const { list } = ctx.request.body;
     try {
-        // let list = [{
-        //     codeId: '201803113',
-        //     password: '20180111',
-        //     username: '20180111',
-        //     email: ''
-        // }, {
-        //     codeId: '201801311',
-        //     password: '20180111',
-        //     username: '20180111',
-        //     email: ''
-        // }, {
-        //     codeId: '201801513',
-        //     password: '20180111',
-        //     username: '20180111',
-        //     email: ''
-        // }]
         await User.insertMany(list, { ordered: false }).then(res => {
             ctx.body = {
                 message: "插入成功",
@@ -103,11 +84,17 @@ exports.importUser = async (ctx, next) => {
                 }
             }
         }).catch(err => {
-            ctx.body = {
-                data: {
-                    err: err
+            if (err.code == 11000) {
+                ctx.body = {
+                    message: "插入发生错误",
+                    data: {
+                        errResult: err.result
+                    }
                 }
+            } else {
+                throw err
             }
+
         })
     } catch (err) {
         throw err
