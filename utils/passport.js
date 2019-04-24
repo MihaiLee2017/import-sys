@@ -27,7 +27,8 @@ passport.use(new LocalStrategy({
   let where = {
     codeId: username
   };
-  let result = await UserModel.findOne(where)
+  let result = await UserModel.findOne(where).populate('roleId')
+
   if (result != null) {
     if (result.password === password) {
       return done(null, result)
