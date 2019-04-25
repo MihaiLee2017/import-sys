@@ -117,30 +117,48 @@ exports.exit = async (ctx, next) => {
 
 exports.getUserList = async (ctx, next) => {
     let { username = "", codeId = "", roleId = "", page = 1, size = 20 } = ctx.request.body
-    console.log("username, codeId, roleId")
-    console.log(username, codeId, roleId)
     // if (!ctx.isAuthenticated()) {
     try {
         const skip = Number(size) * (Number(page) - 1)
-        let filter = {}
+        let filter = {
+            username: { $regex: username },
+            codeId: { $regex: codeId }
+        }
+        if (roleId) {
+            filter.roleId = roleId
+        }
         // if (username) filter.username = username
         // if (codeId) filter.codeId = codeId
         // if (roleId) filter.roleId = roleId
         // const result = await User.find({ username: username.indexOf(username) > -1 }, null, { skip })
-        const result = await User.find({
-            $or: [  // 多字段同时匹配
-                { username: { $regex: username } },
-                { codeId: { $regex: codeId } },
-                // { roleId: { $regex: roleId } },
-            ]
-        }, {
-                password: 0 // 返回结果不包含密码字段
-            },
+
+        const result = await User.find(filter, {
+            password: 0 // 返回结果不包含密码字段
+        },
             {
                 sort: { create_date: -1 },// 按照 _id倒序排列
                 skip: skip,
                 limit: Number(size)
-            })
+            }).populate({ path: 'roleId', select: { _id: true, key: true, role: true } })
+        ctx.body = {
+            data: {
+                result: result
+            }
+        }
+    } catch (err) {
+        throw err
+    }
+    // } else {
+    //     ctx.body = {
+    //         // code: -1
+    //     }
+    // }
+}
+exports.delUser = async (ctx, next) => {
+    let { _id } = ctx.request.body
+    // if (!ctx.isAuthenticated()) {
+    try {
+        const result = await User.findOneAndDelete({ _id })
         ctx.body = {
             data: {
                 result: result
